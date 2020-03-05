@@ -5,26 +5,39 @@ from django.db import models
 """
 
 
-class Damage(models.Model):
-    pass
-
-
 class ValuesOnLevels(models.Model):
-    pass
+    lvl1 = models.IntegerField(default=-1)
+    lvl2 = models.IntegerField(default=-1)
+    lvl3 = models.IntegerField(default=-1)
+    lvl4 = models.IntegerField(default=-1)
+    lvl5 = models.IntegerField(default=-1)
+    dop = models.CharField(default='', blank=True)
+
+
+class Damage(models.Model):
+    physical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='physical')
+    magical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='magical')
+    clear = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='clear')
 
 
 class EffectPrototype(models.Model):
+    live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
+    is_instantly = False
+
     class Meta:
         abstract = True
+
+    def create_effect(self):
+        pass
 
 
 # ------------------ subclasses
 class AttackBuf(EffectPrototype):
-    pass
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
 
 
 class Slowdown(EffectPrototype):
-    pass
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
 
 
 class Stun(EffectPrototype):
@@ -44,18 +57,21 @@ class Bleeding(EffectPrototype):
 
 
 class Poisoning(EffectPrototype):
-    pass
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
 
 
 class Shield(EffectPrototype):
-    pass
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
+    is_instantly = True
 
 
 class Heal(EffectPrototype):
-    pass
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
+    is_instantly = True
+
+
 # -----------------------------
 
 
 class Effect(models.Model):
-    pass
-
+    live = models.IntegerField(default=0)
