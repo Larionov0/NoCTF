@@ -9,7 +9,7 @@ class Damage(models.Model):
     pass
 
 
-class LevelsOnLevels(models.Model):
+class ValuesOnLevels(models.Model):
     pass
 
 
