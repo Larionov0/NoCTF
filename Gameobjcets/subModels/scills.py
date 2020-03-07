@@ -13,16 +13,16 @@ class SubSkill(models.Model):
 
 class EffectsToTargetSubSkill(SubSkill):
     range = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
-    effects = models.OneToOneField(EffectPrototype, on_delete=models.CASCADE)
+    effects = models.OneToOneField(EffectCollector, on_delete=models.CASCADE)
     damage = models.OneToOneField(Damage, on_delete=models.CASCADE)
 
 
 class EffectsInZoneSubSkill(SubSkill):
-    effects = models.OneToOneField(EffectPrototype, on_delete=models.CASCADE)
+    effects = models.OneToOneField(EffectCollector, on_delete=models.CASCADE)
     damage = models.OneToOneField(Damage, on_delete=models.CASCADE)
 
 
 class EffectsInRadiusSubSkill(SubSkill):
     range = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
-    effects = models.OneToOneField(EffectPrototype, on_delete=models.CASCADE)
+    effects = models.OneToOneField(EffectCollector, on_delete=models.CASCADE)
     damage = models.OneToOneField(Damage, on_delete=models.CASCADE)
