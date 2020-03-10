@@ -47,8 +47,12 @@ class Effect(models.Model):
     def minus_live(self):
         self.live -= 1
         if self.live <= 0:
-            self.hero.effects.remove(self)
+            self.hero.remove_effect(self)
         self.save()
+
+    @property
+    def hero(self):
+        return self.hero.all()[0]
 
     @property
     def proto(self):
@@ -58,7 +62,7 @@ class Effect(models.Model):
 class EffectPrototype(models.Model):
     live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
     is_instantly = False
-    collector = models.ManyToManyField(EffectCollector)
+    collector = models.ManyToManyField(EffectCollector, blank=True, null=True)
     effects = models.ManyToManyField(Effect, related_name='%(class)s_proto')
 
     class Meta:
@@ -69,6 +73,14 @@ class EffectPrototype(models.Model):
 
     def tick(self, hero):
         pass
+
+    @staticmethod
+    def all_effect_prototypes():
+        protos = []
+        for cls in AttackBuf, Slowdown, Stun, Fetter, Silence, Bleeding, Poisoning, Shield, Heal:
+            for proto in cls.objects.all():
+                protos.append(proto)
+        return protos
 
 
 # ------------------ subclasses

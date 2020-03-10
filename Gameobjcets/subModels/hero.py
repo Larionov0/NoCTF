@@ -47,7 +47,7 @@ class Hero(models.Model):
     hp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
     is_alive = models.BooleanField(default=True)
-    effects = models.ForeignKey(Effect, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero')
+    effects = models.ManyToManyField(Effect, blank=True, null=True, related_name='hero')
 
     def change_hp(self, hp):
         if hp >= 0:
@@ -71,8 +71,14 @@ class Hero(models.Model):
         self.save()
 
     def tick(self):
-        for effect in self.effects:
+        for effect in self.effects.all():
             effect.tick(self)
+
+    def remove_effect(self, effect):
+        self.effects.remove(effect)
+
+    def add_effect(self, effect):
+        self.effects.add(effect)
 
     @property
     def max_hp(self):
