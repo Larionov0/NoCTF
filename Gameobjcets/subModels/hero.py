@@ -47,7 +47,7 @@ class Hero(models.Model):
     hp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
     is_alive = models.BooleanField(default=True)
-    effects = models.ManyToManyField(Effect, blank=True, null=True, related_name='hero')
+    effects = models.ManyToManyField(Effect, blank=True, null=True)
 
     def change_hp(self, hp):
         if hp >= 0:

@@ -52,7 +52,7 @@ class Effect(models.Model):
 
     @property
     def hero(self):
-        return self.hero.all()[0]
+        return self.hero_set.all()[0]
 
     @property
     def proto(self):
