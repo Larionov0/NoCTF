@@ -56,14 +56,26 @@ class Effect(models.Model):
 
     @property
     def proto(self):
-        return self.proto.all()
+        for proto in self.get_all_prototypes():
+            if self in proto.effects.all():
+                return proto
+        raise Exception(f"Effect without proto: {self}")
+
+    def get_all_prototypes(self):
+        protos = []
+        sets = list(filter(lambda set: set.endswith('_proto'), dir(self)))
+        for set in sets:
+            set = getattr(self, set)
+            for proto in set.all():
+                protos.append(proto)
+        return protos
 
 
 class EffectPrototype(models.Model):
     live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
     is_instantly = False
     collector = models.ManyToManyField(EffectCollector, blank=True, null=True)
-    effects = models.ManyToManyField(Effect, related_name='%(class)s_proto')
+    effects = models.ManyToManyField(Effect, blank=True, related_name='%(class)s_proto')
 
     class Meta:
         abstract = True
