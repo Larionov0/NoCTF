@@ -17,6 +17,18 @@ class ValuesOnLevels(models.Model):
     lvl5 = models.IntegerField(default=-1)
     dop = models.CharField(default='', max_length=100, blank=True)
 
+    def __getitem__(self, number):
+        if number == 1:
+            return self.lvl1
+        elif number == 2:
+            return self.lvl2
+        elif number == 3:
+            return self.lvl3
+        elif number == 4:
+            return self.lvl4
+        elif number == 5:
+            return self.lvl5
+
 
 class Damage(models.Model):
     physical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='physical')
@@ -24,15 +36,38 @@ class Damage(models.Model):
     clear = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='clear')
 
 
+class Effect(models.Model):
+    live = models.IntegerField(default=0)
+
+    def tick(self, hero):
+        self.proto.tick(hero)
+        self.minus_live()
+        self.save()
+
+    def minus_live(self):
+        self.live -= 1
+        if self.live <= 0:
+            self.hero.effects.remove(self)
+        self.save()
+
+    @property
+    def proto(self):
+        return self.proto.all()
+
+
 class EffectPrototype(models.Model):
     live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
     is_instantly = False
     collector = models.ManyToManyField(EffectCollector)
+    effects = models.ManyToManyField(Effect, related_name='%(class)s_proto')
 
     class Meta:
         abstract = True
 
     def create_effect(self):
+        pass
+
+    def tick(self, hero):
         pass
 
 
@@ -58,7 +93,10 @@ class Silence(EffectPrototype):
 
 
 class Bleeding(EffectPrototype):
-    pass
+    value = 5
+
+    def tick(self, hero):
+        hero.get_damage(5)
 
 
 class Poisoning(EffectPrototype):
@@ -76,7 +114,3 @@ class Heal(EffectPrototype):
 
 
 # -----------------------------
-
-
-class Effect(models.Model):
-    live = models.IntegerField(default=0)

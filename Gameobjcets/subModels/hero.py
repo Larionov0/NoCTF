@@ -32,8 +32,9 @@ class Stats(models.Model):
 
 
 class HeroPrototype(models.Model):
-    stats = models.ForeignKey(Stats, on_delete=models.CASCADE)
     name = models.CharField(max_length=30, default='', unique=True)
+    hp = models.OneToOneField(ValuesOnLevels, on_delete=models.SET_NULL, null=True, blank=True)
+    stats = models.ForeignKey(Stats, on_delete=models.CASCADE)
     q = models.OneToOneField(Skill, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero_q')
     w = models.OneToOneField(Skill, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero_w')
     e = models.OneToOneField(Skill, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero_e')
@@ -41,4 +42,38 @@ class HeroPrototype(models.Model):
 
 
 class Hero(models.Model):
+    proto = models.ForeignKey(HeroPrototype, on_delete=models.CASCADE)
     stats = models.ForeignKey(Stats, on_delete=models.CASCADE)
+    hp = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+    is_alive = models.BooleanField(default=True)
+    effects = models.ForeignKey(Effect, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero')
+
+    def change_hp(self, hp):
+        if hp >= 0:
+            return self.get_heal(hp)
+        else:
+            return self.get_damage(-hp)
+
+    def get_damage(self, hp):
+        assert hp >= 0
+        self.hp -= hp
+        if self.hp <= 0:
+            self.is_alive = False
+        self.save()
+
+    def get_heal(self, hp):
+        assert hp >= 0
+        self.hp += hp
+        max_hp = self.max_hp
+        if self.hp > max_hp:
+            self.hp = max_hp
+        self.save()
+
+    def tick(self):
+        for effect in self.effects:
+            effect.tick(self)
+
+    @property
+    def max_hp(self):
+        return self.proto.hp[self.level]
