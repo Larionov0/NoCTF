@@ -38,17 +38,27 @@ class Damage(models.Model):
 
 class Effect(models.Model):
     live = models.IntegerField(default=0)
+    value = models.IntegerField(default=0)
 
-    def tick(self, hero):
-        self.proto.tick(hero)
+    def tick(self):
+        self.proto.tick(self.hero)
         self.minus_live()
         self.save()
 
     def minus_live(self):
         self.live -= 1
-        if self.live <= 0:
-            self.hero.remove_effect(self)
         self.save()
+        if self.live <= 0:
+            self.delete()
+
+    def remove_from_hero(self):
+        self.hero.remove_effect(self)
+        if not self.proto.is_live_on_target:
+            self.maker.remove_effect(self)
+
+    @property
+    def maker(self):
+        return self.maker_set.all()[0]
 
     @property
     def hero(self):
@@ -63,8 +73,7 @@ class Effect(models.Model):
 
     def get_all_prototypes(self):
         protos = []
-        sets = list(filter(lambda set: set.endswith('_proto'), dir(self)))
-        for set in sets:
+        for set in filter(lambda set: set.endswith('_proto'), dir(self)):
             set = getattr(self, set)
             for proto in set.all():
                 protos.append(proto)
@@ -72,8 +81,10 @@ class Effect(models.Model):
 
 
 class EffectPrototype(models.Model):
-    live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
+    is_live_on_target = True  # отсчет live во время хода игрока, НА КОТОРОМ еффект? (или игрока, который дал эфект)
     is_instantly = False
+
+    live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
     collector = models.ManyToManyField(EffectCollector, blank=True, null=True)
     effects = models.ManyToManyField(Effect, blank=True, related_name='%(class)s_proto')
 
@@ -128,8 +139,8 @@ class Poisoning(EffectPrototype):
 
 
 class Shield(EffectPrototype):
+    is_live_on_target = False
     value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="shield_effect")
-    is_instantly = True
 
 
 class Heal(EffectPrototype):

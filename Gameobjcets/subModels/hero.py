@@ -47,7 +47,32 @@ class Hero(models.Model):
     hp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
     is_alive = models.BooleanField(default=True)
-    effects = models.ManyToManyField(Effect, blank=True, null=True)
+    effects = models.ManyToManyField(Effect, blank=True)
+    my_effects = models.ManyToManyField(Effect, blank=True, related_name='maker_set')
+
+    @property
+    def shield(self):
+        value = 0
+        for effect in self.get_all_shields():
+            value += effect.value
+        return value
+
+    def shield_block(self, damage):
+        for effect in self.get_all_shields():
+            if effect.value > damage:
+                effect.value -= damage
+                effect.save()
+                return 0
+            else:
+                damage -= effect.value
+                effect.value = 0
+                effect.delete()
+        return damage
+
+    def get_all_shields(self):
+        for effect in self.effects.all():
+            if isinstance(effect.proto, Shield):
+                yield effect
 
     def change_hp(self, hp):
         if hp >= 0:
@@ -55,9 +80,11 @@ class Hero(models.Model):
         else:
             return self.get_damage(-hp)
 
-    def get_damage(self, hp):
-        assert hp >= 0
-        self.hp -= hp
+    def get_damage(self, damage):
+        assert damage >= 0
+        damage = self.shield_block(damage)
+
+        self.hp -= damage
         if self.hp <= 0:
             self.is_alive = False
         self.save()
@@ -72,7 +99,11 @@ class Hero(models.Model):
 
     def tick(self):
         for effect in self.effects.all():
-            effect.tick(self)
+            if effect.proto.is_live_on_target:
+                effect.tick()
+        for effect in self.my_effects.all():
+            if not effect.proto.is_live_on_target:
+                effect.tick()
 
     def remove_effect(self, effect):
         self.effects.remove(effect)
