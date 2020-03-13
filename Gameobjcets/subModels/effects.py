@@ -6,7 +6,14 @@ from django.db import models
 
 
 class EffectCollector(models.Model):
-    pass
+    @property
+    def effects(self):
+        effects = []
+        for set in filter(lambda set: set.endswith('_effects_set'), dir(self)):
+            set = getattr(self, set)
+            for effect in set.all():
+                effects.append(effect)
+        return effects
 
 
 class ValuesOnLevels(models.Model):
@@ -85,7 +92,7 @@ class EffectPrototype(models.Model):
     is_instantly = False
 
     live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
-    collector = models.ManyToManyField(EffectCollector, blank=True, null=True)
+    collector = models.ManyToManyField(EffectCollector, blank=True, null=True, related_name='%(class)s_effects_set')
     effects = models.ManyToManyField(Effect, blank=True, related_name='%(class)s_proto')
 
     class Meta:

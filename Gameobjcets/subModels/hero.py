@@ -2,7 +2,8 @@ from .scills import *
 
 
 class AbstractBubble(models.Model):
-    vaule = models.IntegerField(default=0)
+    value = models.IntegerField(default=0)
+
     class Meta:
         abstract = True
 
@@ -17,18 +18,43 @@ class StatBubble(AbstractBubble):
     prev = models.OneToOneField(PriceBubble, blank=True, null=True, on_delete=models.SET_NULL,
                                 related_name='next_bubble')
 
+    @classmethod
+    def create_base(cls):
+        return cls.objects.create(value=0)
+
 
 class Stats(models.Model):
-    attack = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                               related_name="attack_stats")
-    magic = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                              related_name="magic_stats")
-    armor = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                              related_name="armor_stats")
-    range = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                              related_name="range_stats")
-    speed = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                              related_name="speed_stats")
+    attack = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                                  related_name="attack_stat")
+    magic = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                                 related_name="magic_stat")
+    armor = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                                 related_name="armor_stat")
+    range = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                                 related_name="range_stat")
+    speed = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                                 related_name="speed_stat")
+
+    def __setattr__(self, key, value):
+        setattr(self, key, value)
+
+    @classmethod
+    def create_base(cls):
+        new_stats = cls.objects.create()
+        new_stats.attack = StatBubble.create_base()
+        new_stats.magic = StatBubble.create_base()
+        new_stats.armor = StatBubble.create_base()
+        new_stats.range = StatBubble.create_base()
+        new_stats.speed = StatBubble.create_base()
+        return new_stats
+
+    def delete_with_bubbles(self):
+        self.attack.delete()
+        self.magic.delete()
+        self.armor.delete()
+        self.range.delete()
+        self.speed.delete()
+        self.delete()
 
 
 class HeroPrototype(models.Model):
@@ -43,12 +69,18 @@ class HeroPrototype(models.Model):
 
 class Hero(models.Model):
     proto = models.ForeignKey(HeroPrototype, on_delete=models.CASCADE)
-    stats = models.ForeignKey(Stats, on_delete=models.CASCADE)
+    stats = models.OneToOneField(Stats, on_delete=models.CASCADE, related_name='hero_stats')
+    modifier = models.OneToOneField(Stats, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='hero_modifier')
     hp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
     is_alive = models.BooleanField(default=True)
     effects = models.ManyToManyField(Effect, blank=True)
     my_effects = models.ManyToManyField(Effect, blank=True, related_name='maker_set')
+    distance_on_this_move = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Hero {self.proto.name}"
 
     @property
     def shield(self):
@@ -56,6 +88,11 @@ class Hero(models.Model):
         for effect in self.get_all_shields():
             value += effect.value
         return value
+
+    def create_modifier(self):
+        if self.modifier is not None:
+            self.modifier.delete_with_bubbles()
+        self.modifier = Stats.create_base()
 
     def shield_block(self, damage):
         for effect in self.get_all_shields():
