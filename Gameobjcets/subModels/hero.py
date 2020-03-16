@@ -35,6 +35,9 @@ class Stats(models.Model):
     speed = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
                                  related_name="speed_stat")
 
+    def __str__(self):
+        return f"at {self.attack}; m {self.magic}; ar {self.armor}; r {self.range}; s {self.speed}"
+
     def __setattr__(self, key, value):
         setattr(self, key, value)
 
@@ -75,6 +78,23 @@ class HeroPrototype(models.Model):
     e = models.OneToOneField(Skill, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero_e')
     r = models.OneToOneField(Skill, on_delete=models.SET_NULL, blank=True, null=True, related_name='hero_r')
 
+    def __str__(self):
+        return f"HeroProto {self.name}"
+
+    def create_hero(self):
+        pass
+
+
+class SkillsCooldowns(models.Model):
+    q_cooldown = models.IntegerField(default=0)
+    w_cooldown = models.IntegerField(default=0)
+    e_cooldown = models.IntegerField(default=0)
+    r_cooldown = models.IntegerField(default=0)
+    q = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='q_MY')
+    w = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='w_MY')
+    e = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='e_MY')
+    r = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='r_MY')
+
 
 class Hero(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -88,9 +108,10 @@ class Hero(models.Model):
     effects = models.ManyToManyField(Effect, blank=True)
     my_effects = models.ManyToManyField(Effect, blank=True, related_name='maker_set')
     distance_on_this_move = models.IntegerField(default=0)
+    skills = models.OneToOneField(SkillsCooldowns, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return f"Hero {self.proto.name}"
+        return f"Hero {self.proto.name} (lvl {self.level}) ({self.hp}/{self.max_hp} hp)"
 
     @property
     def shield(self):

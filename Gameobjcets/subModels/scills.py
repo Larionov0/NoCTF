@@ -5,6 +5,9 @@ class Skill(models.Model):
     name = models.CharField(max_length=40, default="")
     cooldown = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Scill {self.name}"
+
 
 class SubSkill(models.Model):
     effects_collector = models.OneToOneField(EffectCollector, on_delete=models.CASCADE,
