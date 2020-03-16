@@ -9,5 +9,6 @@ class Game(models.Model):
         abstract = True
 
 
+
 class StandardGame(Game):
     pass

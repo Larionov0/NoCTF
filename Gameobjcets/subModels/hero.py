@@ -53,6 +53,7 @@ class Stats(models.Model):
         new_stats.armor = other.armor
         new_stats.range = other.range
         new_stats.speed = other.speed
+        new_stats.save()
         return new_stats
 
     @classmethod
@@ -63,6 +64,7 @@ class Stats(models.Model):
         new_stats.armor = StatBubble.create_base()
         new_stats.range = StatBubble.create_base()
         new_stats.speed = StatBubble.create_base()
+        new_stats.save()
         return new_stats
 
     def delete_with_bubbles(self):
@@ -105,12 +107,13 @@ class HeroPrototype(models.Model):
             r=self.r
         )
 
-        Hero.objects.create(
+        hero = Hero.objects.create(
             proto=self,
             stats=stats,
             modifier=Stats.create_base(),
             skills=skills
         )
+        hero.init()
 
 
 class SkillsCooldowns(models.Model):
@@ -138,8 +141,7 @@ class Hero(models.Model):
     energy_on_this_move = models.FloatField(default=0)
     skills = models.OneToOneField(SkillsCooldowns, on_delete=models.SET_NULL, blank=True, null=True)
 
-    def __init__(self, *args, **kwargs):
-        super(models.Model, self).__init__(self, *args, **kwargs)
+    def init(self):
         self.hp = self.max_hp
         self.level = 1
 
