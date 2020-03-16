@@ -57,6 +57,15 @@ class Stats(models.Model):
         self.delete()
 
 
+class Team(models.Model):
+    @property
+    def game(self):
+        for set in filter(lambda set: set.endswith('_game_MY'), dir(self)):
+            set = getattr(self, set)
+            if len(set.all()) != 0:
+                return set.all()[0]
+
+
 class HeroPrototype(models.Model):
     name = models.CharField(max_length=30, default='', unique=True)
     hp = models.OneToOneField(ValuesOnLevels, on_delete=models.SET_NULL, null=True, blank=True)
@@ -68,6 +77,7 @@ class HeroPrototype(models.Model):
 
 
 class Hero(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
     proto = models.ForeignKey(HeroPrototype, on_delete=models.CASCADE)
     stats = models.OneToOneField(Stats, on_delete=models.CASCADE, related_name='hero_stats')
     modifier = models.OneToOneField(Stats, on_delete=models.SET_NULL, null=True, blank=True,
