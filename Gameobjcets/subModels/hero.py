@@ -9,7 +9,8 @@ class AbstractBubble(models.Model):
 
 
 class PriceBubble(AbstractBubble):
-    pass
+    def __str__(self):
+        return f"PriceBubble {self.value}"
 
 
 class StatBubble(AbstractBubble):
@@ -17,6 +18,9 @@ class StatBubble(AbstractBubble):
                                 related_name="prev_bubble")
     prev = models.OneToOneField(PriceBubble, blank=True, null=True, on_delete=models.SET_NULL,
                                 related_name='next_bubble')
+
+    def __str__(self):
+        return f"StatBubble {self.value}"
 
     @classmethod
     def create_base(cls):
@@ -36,10 +40,20 @@ class Stats(models.Model):
                                  related_name="speed_stat")
 
     def __str__(self):
-        return f"at {self.attack}; m {self.magic}; ar {self.armor}; r {self.range}; s {self.speed}"
+        return f"at {self.attack.value}; m {self.magic.value}; ar {self.armor.value}; r {self.range.value}; s {self.speed.value}"
 
-    def __setattr__(self, key, value):
+    def __setitem__(self, key, value):
         setattr(self, key, value)
+
+    @classmethod
+    def create_copy(cls, other):
+        new_stats = cls()
+        new_stats.attack = other.attack
+        new_stats.magic = other.magic
+        new_stats.armor = other.armor
+        new_stats.range = other.range
+        new_stats.speed = other.speed
+        return new_stats
 
     @classmethod
     def create_base(cls):
@@ -82,7 +96,21 @@ class HeroPrototype(models.Model):
         return f"HeroProto {self.name}"
 
     def create_hero(self):
-        pass
+        stats = Stats.create_copy(self.stats)
+
+        skills = SkillsCooldowns(
+            q=self.q,
+            w=self.w,
+            e=self.e,
+            r=self.r
+        )
+
+        Hero.objects.create(
+            proto=self,
+            stats=stats,
+            modifier=Stats.create_base(),
+            skills=skills
+        )
 
 
 class SkillsCooldowns(models.Model):
@@ -97,7 +125,7 @@ class SkillsCooldowns(models.Model):
 
 
 class Hero(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True)
     proto = models.ForeignKey(HeroPrototype, on_delete=models.CASCADE)
     stats = models.OneToOneField(Stats, on_delete=models.CASCADE, related_name='hero_stats')
     modifier = models.OneToOneField(Stats, on_delete=models.SET_NULL, null=True, blank=True,
@@ -107,8 +135,15 @@ class Hero(models.Model):
     is_alive = models.BooleanField(default=True)
     effects = models.ManyToManyField(Effect, blank=True)
     my_effects = models.ManyToManyField(Effect, blank=True, related_name='maker_set')
-    distance_on_this_move = models.IntegerField(default=0)
+    energy_on_this_move = models.FloatField(default=0)
     skills = models.OneToOneField(SkillsCooldowns, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(models.Model, self).__init__(self, *args, **kwargs)
+        self.hp = self.max_hp
+        self.level = 1
+
+        self.save()
 
     def __str__(self):
         return f"Hero {self.proto.name} (lvl {self.level}) ({self.hp}/{self.max_hp} hp)"
