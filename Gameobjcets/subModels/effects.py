@@ -92,7 +92,7 @@ class EffectPrototype(models.Model):
     is_instantly = False
 
     live = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE)
-    collector = models.ManyToManyField(EffectCollector, blank=True, null=True, related_name='%(class)s_effects_set')
+    collector = models.ManyToManyField(EffectCollector, blank=True, related_name='%(class)s_effects_set')
     effects = models.ManyToManyField(Effect, blank=True, related_name='%(class)s_proto')
 
     class Meta:
