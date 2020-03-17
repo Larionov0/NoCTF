@@ -224,6 +224,9 @@ class Hero(models.Model):
     def add_effect(self, effect):
         self.effects.add(effect)
 
+    def add_my_effect(self, effect):
+        self.my_effects.add(effect)
+
     @property
     def max_hp(self):
         return self.proto.hp[self.level]

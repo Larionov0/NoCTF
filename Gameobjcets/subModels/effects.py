@@ -100,8 +100,13 @@ class EffectPrototype(models.Model):
     class Meta:
         abstract = True
 
-    def create_effect(self):
-        pass
+    def create_effect(self, maker):
+        new_effect = Effect()
+        new_effect.live = self.live[maker.level]
+        new_effect.save()
+        if not self.is_live_on_target:
+            maker.add_my_effect(new_effect)
+        return new_effect
 
     def tick(self, hero):
         pass
@@ -121,8 +126,11 @@ class HavingValueEffectPrototype(EffectPrototype):
     class Meta:
         abstract = True
 
-    def create_effect(self):
-        pass
+    def create_effect(self, maker):
+        new_effect = super().create_effect(maker)
+        new_effect.value = self.value[maker.level]
+        new_effect.save()
+        return new_effect
 
 
 # ------------------ subclasses
