@@ -24,20 +24,22 @@ class StatBubble(AbstractBubble):
 
     @classmethod
     def create_base(cls):
-        return cls.objects.create(value=0)
+        ob = cls.objects.create(value=0)
+        ob.save()
+        return ob
 
 
 class Stats(models.Model):
-    attack = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                                  related_name="attack_stat")
-    magic = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                                 related_name="magic_stat")
-    armor = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                                 related_name="armor_stat")
-    range = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                                 related_name="range_stat")
-    speed = models.OneToOneField(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
-                                 related_name="speed_stat")
+    attack = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                               related_name="attack_stat")
+    magic = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                              related_name="magic_stat")
+    armor = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                              related_name="armor_stat")
+    range = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                              related_name="range_stat")
+    speed = models.ForeignKey(StatBubble, on_delete=models.SET_NULL, blank=True, null=True,
+                              related_name="speed_stat")
 
     def __str__(self):
         return f"at {self.attack.value}; m {self.magic.value}; ar {self.armor.value}; r {self.range.value}; s {self.speed.value}"
@@ -47,7 +49,7 @@ class Stats(models.Model):
 
     @classmethod
     def create_copy(cls, other):
-        new_stats = cls()
+        new_stats = cls.objects.create()
         new_stats.attack = other.attack
         new_stats.magic = other.magic
         new_stats.armor = other.armor
@@ -106,6 +108,7 @@ class HeroPrototype(models.Model):
             e=self.e,
             r=self.r
         )
+        skills.save()
 
         hero = Hero.objects.create(
             proto=self,
@@ -121,10 +124,10 @@ class SkillsCooldowns(models.Model):
     w_cooldown = models.IntegerField(default=0)
     e_cooldown = models.IntegerField(default=0)
     r_cooldown = models.IntegerField(default=0)
-    q = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='q_MY')
-    w = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='w_MY')
-    e = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='e_MY')
-    r = models.OneToOneField(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='r_MY')
+    q = models.ForeignKey(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='q_MY')
+    w = models.ForeignKey(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='w_MY')
+    e = models.ForeignKey(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='e_MY')
+    r = models.ForeignKey(Skill, on_delete=models.SET_NULL, null=True, blank=True, related_name='r_MY')
 
 
 class Hero(models.Model):
@@ -219,3 +222,6 @@ class Hero(models.Model):
     @property
     def max_hp(self):
         return self.proto.hp[self.level]
+
+    def start_move(self):
+        pass
