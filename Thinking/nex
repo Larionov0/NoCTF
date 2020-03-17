@@ -1,0 +1,4 @@
+Hero. current_speed
+Hero.start_move
+Hero.end_move
+Game.next_turn

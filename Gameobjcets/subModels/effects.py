@@ -38,8 +38,10 @@ class ValuesOnLevels(models.Model):
 
 
 class Damage(models.Model):
-    physical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='physical')
-    magical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='magical')
+    physical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True,
+                                    related_name='physical')
+    magical = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True,
+                                   related_name='magical')
     clear = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, blank=True, null=True, related_name='clear')
 
 
@@ -107,19 +109,33 @@ class EffectPrototype(models.Model):
     @staticmethod
     def all_effect_prototypes():
         protos = []
-        for cls in AttackBuf, Slowdown, Stun, Fetter, Silence, Bleeding, Poisoning, Shield, Heal:
+        for cls in AttackBuf, Slowdown, SpeedUp, Stun, Fetter, Silence, Bleeding, Poisoning, Shield, Heal:
             for proto in cls.objects.all():
                 protos.append(proto)
         return protos
 
 
+class HavingValueEffectPrototype(EffectPrototype):
+    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="%(class)s_effect")
+
+    class Meta:
+        abstract = True
+
+    def create_effect(self):
+        pass
+
+
 # ------------------ subclasses
-class AttackBuf(EffectPrototype):
-    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="attack_buf_effect")
+class AttackBuf(HavingValueEffectPrototype):
+    pass
 
 
-class Slowdown(EffectPrototype):
-    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="slowdown_effect")
+class Slowdown(HavingValueEffectPrototype):
+    pass
+
+
+class SpeedUp(HavingValueEffectPrototype):
+    pass
 
 
 class Stun(EffectPrototype):
@@ -141,18 +157,15 @@ class Bleeding(EffectPrototype):
         hero.get_damage(5)
 
 
-class Poisoning(EffectPrototype):
-    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="poisoning_effect")
+class Poisoning(HavingValueEffectPrototype):
+    pass
 
 
-class Shield(EffectPrototype):
+class Shield(HavingValueEffectPrototype):
     is_live_on_target = False
-    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="shield_effect")
 
 
-class Heal(EffectPrototype):
-    value = models.OneToOneField(ValuesOnLevels, on_delete=models.CASCADE, related_name="heal_effect")
+class Heal(HavingValueEffectPrototype):
     is_instantly = True
-
 
 # -----------------------------

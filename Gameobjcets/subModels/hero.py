@@ -182,6 +182,11 @@ class Hero(models.Model):
             if isinstance(effect.proto, Shield):
                 yield effect
 
+    def get_all_speed_ups(self):
+        for effect in self.effects.all():
+            if isinstance(effect.proto, SpeedUp):
+                yield effect
+
     def change_hp(self, hp):
         if hp >= 0:
             return self.get_heal(hp)
@@ -225,3 +230,10 @@ class Hero(models.Model):
 
     def start_move(self):
         pass
+
+    @property
+    def current_speed(self):
+        speed = self.stats.speed.value
+        for speed_up in self.get_all_speed_ups():
+            speed += speed_up.value
+        return speed
